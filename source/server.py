@@ -12,8 +12,20 @@ sock_sv.listen()
 # データ受信ループ関数
 def recv_client(sock, addr):
     while True:
-        data = sock.recv(1024)
-        print(data.decode("utf-8"))
+        try:
+            data = sock.recv(1024)
+            # 受信データ0バイト時は接続終了
+            if data == b"":
+                break
+            print(data.decode("utf-8"))
+        # 切断時の例外を捕捉したら終了
+        except ConnectionResetError:
+            break
+    
+    # クライアントをクローズ処理
+    sock.shutdown(socket.SHUT_RDWR)
+    sock.close()
+
 
 # クライアント接続ループ
 while True:

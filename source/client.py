@@ -6,9 +6,19 @@ PORT = 49152
 sock = socket.socket(socket.AF_INET)
 sock.connect((IPADDR, PORT))
 
-# 送信無限ループ
 while True:
     # 任意の文字を入力
     data = input("> ")
-    # サーバーに送信
-    sock.send(data.encode("utf-8"))
+    # exitを切断用コマンドとしておく
+    if data == "exit":
+        break
+    else:
+        try:
+            sock.send(data.encode("utf-8"))
+        except ConnectionResetError:
+            break
+
+# 送受信の切断
+sock.shutdown(socket.SHUT_RDWR)
+# ソケットクローズ
+sock.close()
