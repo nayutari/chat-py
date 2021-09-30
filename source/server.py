@@ -1,5 +1,4 @@
 import socket
-# スレッドライブラリ取り込み
 import threading
 
 IPADDR = "127.0.0.1"
@@ -9,29 +8,38 @@ sock_sv = socket.socket(socket.AF_INET)
 sock_sv.bind((IPADDR, PORT))
 sock_sv.listen()
 
-# データ受信ループ関数
+# クライアントのリスト
+client_list = []
+
 def recv_client(sock, addr):
     while True:
         try:
             data = sock.recv(1024)
-            # 受信データ0バイト時は接続終了
             if data == b"":
                 break
-            print(data.decode("utf-8"))
-        # 切断時の例外を捕捉したら終了
+
+            print("$ say client:{}".format(addr))
+
+            # 受信データを全クライアントに送信
+            for client in client_list:
+                client[0].send(data)
+
         except ConnectionResetError:
             break
-    
-    # クライアントをクローズ処理
+
+    # クライアントリストから削除
+    client_list.remove((sock, addr))
+    print("- close client:{}".format(addr))
+
     sock.shutdown(socket.SHUT_RDWR)
     sock.close()
 
-
-# クライアント接続ループ
+# クライアント接続待ちループ
 while True:
-    # クライアントの接続受付
     sock_cl, addr = sock_sv.accept()
-    # スレッドクラスのインスタンス化
+    # クライアントをリストに追加
+    client_list.append((sock_cl, addr))
+    print("+ join client:{}".format(addr))
+
     thread = threading.Thread(target=recv_client, args=(sock_cl, addr))
-    # スレッド処理開始
     thread.start()
